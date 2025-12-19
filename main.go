@@ -12,7 +12,7 @@ import (
 
 type User struct {
 	Name       string
-	ssh        *ssh.Session
+	ssh        ssh.Session
 	TimeJoined time.Time
 	Term       *term.Terminal
 }
@@ -43,11 +43,13 @@ func handleCommand(line string, user *User) {
 			if room.Name == targetRoom {
 				availableRooms[i].Users[user] = true
 				user.Term.Write(fmt.Appendf(nil, "You joined room %s", room.Name))
+				return
 			}
 		}
+		user.Term.Write([]byte("Room Not Found"))
 	case "rooms":
 		for _, room := range availableRooms {
-			user.Term.Write([]byte(room.Name))
+			user.Term.Write(fmt.Appendf(nil, "%s\n", room.Name))
 		}
 	}
 }
@@ -55,7 +57,7 @@ func handleCommand(line string, user *User) {
 func main() {
 	ssh.Handle(func(s ssh.Session) {
 		terminal := term.NewTerminal(s, "\n> ")
-		user := &User{ssh: &s, TimeJoined: time.Now(), Term: terminal}
+		user := &User{ssh: s, TimeJoined: time.Now(), Term: terminal}
 
 		terminal.Write([]byte("Welcome to the SSH chat server\n"))
 		for {
@@ -68,7 +70,6 @@ func main() {
 				fmt.Println("Error reading input:", err)
 				return
 			}
-			// terminal.Write([]byte(line))
 		}
 	})
 
