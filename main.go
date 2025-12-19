@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gliderlabs/ssh"
@@ -20,6 +21,8 @@ type User struct {
 type Room struct {
 	Name  string
 	Users map[*User]bool
+
+	sync sync.Mutex
 }
 
 var availableRooms = []*Room{
@@ -41,7 +44,9 @@ func handleCommand(line string, user *User) {
 		targetRoom := parts[1]
 		for i, room := range availableRooms {
 			if room.Name == targetRoom {
+				room.sync.Lock()
 				availableRooms[i].Users[user] = true
+				room.sync.Unlock()
 				user.Term.Write(fmt.Appendf(nil, "You joined room %s", room.Name))
 				return
 			}
