@@ -28,13 +28,10 @@ func handleCommand(line string, user *room.User) {
 		}
 
 		targetRoom := parts[1]
-		for i, room := range availableRooms {
-			if room.Name == targetRoom {
-				room.Sync.Lock()
-				user.Room = room
-				availableRooms[i].Users[user] = true
-				room.Sync.Unlock()
-				user.Term.Write(fmt.Appendf(nil, "You joined room %s", room.Name))
+		for _, r := range availableRooms {
+			if r.Name == targetRoom {
+				user.Room = r
+				r.Join <- user
 				return
 			}
 		}
@@ -49,8 +46,8 @@ func handleCommand(line string, user *room.User) {
 
 func main() {
 	ssh.Handle(func(s ssh.Session) {
-		terminal := term.NewTerminal(s, "\n> ")
-		user := &room.User{SSH: s, TimeJoined: time.Now(), Term: terminal}
+		terminal := term.NewTerminal(s, fmt.Sprintf("%s>", s.User()))
+		user := &room.User{Name: s.User(), SSH: s, TimeJoined: time.Now(), Term: terminal}
 
 		terminal.Write([]byte("Welcome to the SSH chat server\n"))
 		for {
