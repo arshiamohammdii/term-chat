@@ -4,33 +4,19 @@ import (
 	"fmt"
 	"log"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/gliderlabs/ssh"
 	"golang.org/x/term"
+	"term-chat.com/room"
 )
 
-type User struct {
-	Name       string
-	ssh        ssh.Session
-	TimeJoined time.Time
-	Term       *term.Terminal
+var availableRooms = []*room.Room{
+	room.NewRoom("hacking"),
+	room.NewRoom("studying"),
 }
 
-type Room struct {
-	Name  string
-	Users map[*User]bool
-
-	sync sync.Mutex
-}
-
-var availableRooms = []*Room{
-	{Name: "hacking", Users: map[*User]bool{}},
-	{Name: "studying", Users: map[*User]bool{}},
-}
-
-func handleCommand(line string, user *User) {
+func handleCommand(line string, user *room.User) {
 	parts := strings.Fields(line)
 	cmd := strings.TrimPrefix(parts[0], "/")
 
@@ -44,9 +30,10 @@ func handleCommand(line string, user *User) {
 		targetRoom := parts[1]
 		for i, room := range availableRooms {
 			if room.Name == targetRoom {
-				room.sync.Lock()
+				room.Sync.Lock()
+				user.Room = room
 				availableRooms[i].Users[user] = true
-				room.sync.Unlock()
+				room.Sync.Unlock()
 				user.Term.Write(fmt.Appendf(nil, "You joined room %s", room.Name))
 				return
 			}
@@ -57,19 +44,28 @@ func handleCommand(line string, user *User) {
 			user.Term.Write(fmt.Appendf(nil, "%s\n", room.Name))
 		}
 	}
+
 }
 
 func main() {
 	ssh.Handle(func(s ssh.Session) {
 		terminal := term.NewTerminal(s, "\n> ")
-		user := &User{ssh: s, TimeJoined: time.Now(), Term: terminal}
+		user := &room.User{SSH: s, TimeJoined: time.Now(), Term: terminal}
 
 		terminal.Write([]byte("Welcome to the SSH chat server\n"))
 		for {
 			line, err := terminal.ReadLine()
-			// terminal.Write([]byte(s.User()))
 			if strings.HasPrefix(line, "/") {
 				handleCommand(line, user)
+			} else {
+				if user.Room == nil {
+					user.Term.Write([]byte("Join a room first (/join <room>)\n"))
+					continue
+				}
+				user.Room.Send(room.Message{
+					From: user,
+					Body: line,
+				})
 			}
 			if err != nil {
 				fmt.Println("Error reading input:", err)
