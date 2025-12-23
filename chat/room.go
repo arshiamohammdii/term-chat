@@ -1,4 +1,4 @@
-package room
+package chat
 
 import (
 	"fmt"
@@ -24,11 +24,13 @@ func (r *Room) run() {
 				if msg.From != nil && user == msg.From {
 					continue
 				}
+				//instead of passing a string we pass a style.Render that returns a styled string
 				fmt.Fprintf(user.Term, "%s: %s\n", msg.From.Name, msg.Body)
 			}
 		case joined := <-r.Join:
 			r.Users[joined] = true
 			for user := range r.Users {
+				//Theme.Render
 				fmt.Fprintf(user.Term, "%s joined the room\n", joined.Name)
 			}
 

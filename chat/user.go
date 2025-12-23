@@ -1,10 +1,10 @@
-package room
+package chat
 
 import (
+	"time"
+
 	"github.com/gliderlabs/ssh"
 	"golang.org/x/term"
-
-	"time"
 )
 
 type User struct {
@@ -13,9 +13,4 @@ type User struct {
 	TimeJoined time.Time
 	Term       *term.Terminal
 	Room       *Room
-}
-
-type Message struct {
-	From *User
-	Body string
 }
