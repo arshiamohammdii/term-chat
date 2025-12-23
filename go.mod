@@ -1,4 +1,4 @@
-module term-chat.com
+module github.com/arshiamohammdii/term-chat
 
 go 1.24.4
 

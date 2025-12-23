@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"term-chat.com/server"
+	"github.com/arshiamohammdii/term-chat/server"
 )
 
 func main() {

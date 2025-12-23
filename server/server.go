@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/arshiamohammdii/term-chat/chat"
 	"github.com/gliderlabs/ssh"
 	"golang.org/x/term"
-	"term-chat.com/chat"
 )
 
 type Server struct {
